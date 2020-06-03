@@ -1,9 +1,13 @@
 const   mongoose = require('mongoose');
-const   credentials = require("./credentials.js");
+//const   credentials = require("./credentials.js");
 
 console.log("zldb.js: Connecting to database");
-const dbUrl = 'mongodb://' + credentials.username +
-        ':' + credentials.password + '@' + credentials.host + ':' + credentials.port + '/' + credentials.database;
+
+//const dbUrl = 'mongodb://' + credentials.username +
+//        ':' + credentials.password + '@' + credentials.host + ':' + credentials.port + '/' + credentials.database;
+
+const  dbUrl = 'mongodb://localhost/linkshare' 
+
 console.log(dbUrl);
 
 const connection = mongoose.createConnection(dbUrl, { useNewUrlParser: true } );
@@ -25,15 +29,13 @@ const zlUser = new Schema({
 /* This defines the basic single link record.
  */
 const zlLinks = new Schema({
-    userName: String, 
-    type: String,       // meal, supplement, exersize, mental, etc.
-    name: String,       // Pizza, Vitamin C, Fish OIl
-    amount: Number,     // number of units below
-    units: String,      // name for units - Lds, mg, pints,
-    clicks: Number,     // weighted popularity counter
-    subActions: [],     // List if Ids of grouped actions
-    btnColor: String,   
-    details: String     // any notes the user wants to apply    
+    userName: String,   // Owner of link record
+    type:     String,   // zoom, webEx, Google Docs, etc.
+    linkName: String,   // Name user assigned to link
+    linkURL:  String,   // URL for the link
+    linkTags: String,  	// search tags
+    addDate:  Date,     // date link was added
+    useDate:  Date,     // date link was last used
 })
 
 
