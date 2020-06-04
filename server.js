@@ -140,14 +140,21 @@ router.route('/login').post( function (req, res) {
 router.route('/newLink').post( function (req, res) {
     console.log(" /newLink api POST request, body: ", req.body );
 
-    let linkdb = new zlLinks( req.body );
+    let newLink = req.body;
+    let now = new Date;
+
+ // Add dates to the link object    
+    newLink.useDate = now;
+    newLink.addDate = now;
+
+    let linkdb = new zlLinks( newLink );    // Create a DB item for the object
 
     linkdb.save( (err) => {
         if (err) {
             res.json( { "status":"error", "message": err } );
             throw err;
         }
-        console.log(" /newLink: created" );
+        console.log("/newLink: created" );
         res.json( { "status":"success", "message": "Added new link" } );
     });
 });
@@ -163,7 +170,7 @@ router.route('/newUser').post( function (req, res) {
             res.json( { "status":"error", "message": err } );
             throw err;
         }
-        console.log(" /newUser: created" );
+        console.log("/newUser: created" );
         res.json( { "status":"success", "message": "Added new action" } );
     });
 });
@@ -171,7 +178,7 @@ router.route('/newUser').post( function (req, res) {
 /* Get the links for a passed user */
 
 router.route('/getLinks/:name').get( function (req, res) {
-    console.log(" /getLinks, params: ", req.params );
+    console.log("/getLinks, params: ", req.params );
     let query = { "userName" : req.params.name };
 
     zlLinks.find( query, (err, result) => {
@@ -190,6 +197,29 @@ router.route('/getLinks/:name').get( function (req, res) {
     });
 
 });
+
+
+/* Record a click.   */
+router.route('/bumpClick').post( function (req, res) {
+    console.log("/bumpClick api POST request, body: ", req.body );
+
+    let now = new Date;
+    let filter = { _id: req.body._id };
+    let update = { $inc: { "clicks" : 1 }, useDate: now };
+    console.log("/bumpClick; update: ", update );
+ 
+    let newClickCount = zlLinks.findOneAndUpdate(
+        filter,
+        update,
+        { new: true }, (err) => {
+            console.log("/bumpClick; done - err: ", err );        
+    });
+
+    // Opimistically return success without waiting for mongo.
+    res.json( { "status":"success", "message": "bumped click" } );
+    
+});
+
 
 
 ///------------ The actual server -------------//

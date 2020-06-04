@@ -36,8 +36,24 @@ const zlLinks = new Schema({
     linkTags: String,  	// search tags
     addDate:  Date,     // date link was added
     useDate:  Date,     // date link was last used
+    clicks:   Number    // Number of time used
 })
 
+
+/* Linkshare groups
+ * type == public - Anyone can join, shows up in search
+ * type == private - owner must add people,  shows up in search
+ * type == hidden - owner must add people, does NOT show up in search
+ */
+
+const zlGroup = new Schema({
+    ownerName:  String,  // Owner of group
+    groupName:  String,
+    descriptio: String,
+    tags:       String,
+    type:       String, // Public, private, hidden
+    links:      Array   // Associated link Ids
+})
 
 
 module.exports = {
@@ -48,7 +64,9 @@ module.exports = {
     getzlLinks: () => {
 		return connection.model("zlLinks", zlLinks);
     },
+
+    getzlGroup: () => {
+                return connection.model("zlGroup", zlGroup);
+    },
     
 }
-
- 

@@ -1,0 +1,33 @@
+{
+  "name": "zlapi",
+  "version": "1.0.0",
+  "description": "Back end for linkshare (should lsapi, oh well...)",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbartas/zlapi.git"
+  },
+  "keywords": [
+    "linkshare",
+    "back",
+    "end"
+  ],
+  "author": "John Bartas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jbartas/zlapi/issues"
+  },
+  "homepage": "https://github.com/jbartas/zlapi#readme",
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mongoose": "^5.9.17"
+  }
+}
