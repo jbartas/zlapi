@@ -175,14 +175,34 @@ router.route('/newUser').post( function (req, res) {
     });
 });
 
-/* Get the links for a passed user */
 
+/* Get the information for a passed user */
+router.route('/getUserInfo/:userName').get( function (req, res) {
+    console.log("/getUserInfo, params: ", req.params );
+
+    let query = req.params;
+
+    zlUser.find( query,  (err, result) => {
+        if(err) {
+            console.log( "API: getUserInfo err", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            if( result.length > 0 ) {
+                console.log( result );
+                res.json( { "status":"success", "userInfo": result } );
+            }
+        }
+    });
+});
+
+
+/* Get the links for a passed user */
 router.route('/getLinks/:name').get( function (req, res) {
     console.log("/getLinks, params: ", req.params );
     let query = { "userName" : req.params.name };
 
     zlLinks.find( query, (err, result) => {
-
         if(err) {
             console.log( "API: getRecords err", err );
             res.json( { "status":"error", "message": err } );
@@ -193,9 +213,13 @@ router.route('/getLinks/:name').get( function (req, res) {
                 // console.log( result );
                 res.json( { "status":"success", "recordList": result } );
             }
+            else {
+                console.log("No link records for user " + req.params.name );
+                // return zero length list
+                res.json( { "status":"success", "recordList": result } );
+            }
         }    
     });
-
 });
 
 
