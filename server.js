@@ -140,10 +140,33 @@ router.route('/login').post( function (req, res) {
 router.route('/newLink').post( function (req, res) {
     console.log(" /newLink api POST request, body: ", req.body );
 
+    /* If passed object has an _id, it's an update to an existing link */
+    if( req.body._id ) {
+        let filter = { _id: req.body._id };
+        let update = req.body;
+        console.log("/newLink; update: ", update );
+
+        let newClickCount = zlLinks.findOneAndUpdate(
+            filter,
+            update,
+            { new: true }, (err) => {
+                if( err ) {
+                    console.log("/newLink: link update error: ", err );
+                    res.json( { "status":"error", "message": err } );
+                }
+                else {
+                    // no error
+                    res.json( { "status":"success", "message": "Updated link" } );
+                }
+                console.log("/newLink update; done - err: ", err );
+        });
+        return;
+    }
+    
     let newLink = req.body;
     let now = new Date;
 
- // Add dates to the link object    
+    /* Add dates to the link object */
     newLink.useDate = now;
     newLink.addDate = now;
 
@@ -152,12 +175,32 @@ router.route('/newLink').post( function (req, res) {
     linkdb.save( (err) => {
         if (err) {
             res.json( { "status":"error", "message": err } );
-            throw err;
+            //throw err;
         }
         console.log("/newLink: created" );
         res.json( { "status":"success", "message": "Added new link" } );
     });
 });
+
+/* Delete a link based on passed _id */
+router.route('/deleteLink').post( function (req, res) {
+    console.log(" /deleteLink api POST request, body: ", req.body );
+
+    del_id = { "_id" : req.body.link_id };
+
+    zlLinks.deleteOne( del_id, (err) => {
+        if( err ) {
+            console.log("/deleteLink: error: ", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+           // no error
+           res.json( { "status":"success", "message": "deleter link" } );
+        }
+        console.log("/deleteLink; done, err: ", err );    
+    });
+});
+
 
 /* Add a new user to the system  */
 router.route('/newUser').post( function (req, res) {

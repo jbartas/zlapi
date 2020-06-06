@@ -36,6 +36,7 @@ const zlLinks = new Schema({
     linkTags: String,  	// search tags
     addDate:  Date,     // date link was added
     useDate:  Date,     // date link was last used
+    password: String,   // optional password for link
     clicks:   Number    // Number of time used
 })
 
