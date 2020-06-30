@@ -64,11 +64,11 @@ const zlGroup = new Schema({
     groupName:  String,		// Unique name, system wide.
     descr:      String,   	// Description of group
     tags:       String,
-	password:   String,		// optional, to limit non-member access
+    password:   String,		// optional, to limit non-member access
     type:       String,     // Public, private, hidden
     links:      Array,      // Associated link Ids
     members:   	Array,      // _id list of member users
-	memberRW:   String,     // "r" (read) or "rw" (read write)
+    memberRW:   String,     // "r" (read) or "rw" (read write)
 })
 
 
