@@ -121,8 +121,8 @@ router.route('/login').post( function (req, res) {
             // Lastly, check the password 
             console.log("user result[0]", result[0]);
             if(bcrypt.compareSync( req.body.password, result[0].password )) {                
-                console.log( "User " + user.userName +" password OK");
-                res.json( { "status":"success", "session": req.session } );
+                console.log( "User " + user.userName + " - password OK, email: " + result[0].email );
+                res.json( { "status":"success", "session": req.session, "userEmail": result[0].email } );
             } else {
                 console.log("password mismatch");
                 res.json( { "status":"error", "message": "password mismatch" } );

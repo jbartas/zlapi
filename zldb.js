@@ -18,11 +18,12 @@ const   ObjectID = require('mongodb').ObjectID;
 /* The basic per-user identity records.
 */
 const zlUser = new Schema({
-    email: String,
+    email:    String,
     userName: String,
     password: String,
-    admin:  Boolean,     // true if Admin
-    groups: Array
+    admin:    Boolean,  // true if Admin
+    groups:   Array,    // _id list for groups
+    friends:  Array     // _id list for friends
 });
 
 
@@ -60,11 +61,12 @@ const zlLinks = new Schema({
 const zlGroup = new Schema({
     adminIds:   Array,     	// Array of admins, by user Id
     groupName:  String,		// Unique name, system wide.
-    info:       String,   	// Description of group
+    descr:      String,   	// Description of group
     tags:       String,
 	password:   String,		// optional, to limit non-member access
     type:       String,     // Public, private, hidden
     links:      Array,      // Associated link Ids
+    members:   	Array,      // _id list of member users
 	memberRW:   String,     // "r" (read) or "rw" (read write)
 })
 
