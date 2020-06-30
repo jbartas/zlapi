@@ -42,18 +42,30 @@ const zlLinks = new Schema({
 
 
 /* Linkshare groups
- * type == public - Anyone can join, shows up in search
- * type == private - owner must add people,  shows up in search
+ *
+ * type == public - Anyone can view, only members can write, and then
+ *     only if the group memberRW is "rw"
+ * type == private - Only members can view. Admin must add members.
+ *     Members can only write only if the group memberRW is "rw"
  * type == hidden - owner must add people, does NOT show up in search
+ *
+ * Admins can always read, write, edit group and add members. 
+ * Links in group are kept in an ID list so they can ve shared 
+ * with other groups and members without copying. If a member 
+ * shares a link with a group, then edits made by the member or 
+ * someone with group permissions show up in both the group and 
+ * the member acctount because of the sharing.
  */
 
 const zlGroup = new Schema({
-    ownerName:  String,  // Owner of group
-    groupName:  String,
-    descriptio: String,
+    adminIds:   Array,     	// Array of admins, by user Id
+    groupName:  String,		// Unique name, system wide.
+    info:       String,   	// Description of group
     tags:       String,
-    type:       String, // Public, private, hidden
-    links:      Array   // Associated link Ids
+	password:   String,		// optional, to limit non-member access
+    type:       String,     // Public, private, hidden
+    links:      Array,      // Associated link Ids
+	memberRW:   String,     // "r" (read) or "rw" (read write)
 })
 
 
