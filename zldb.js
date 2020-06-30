@@ -38,6 +38,7 @@ const zlLinks = new Schema({
     addDate:  Date,     // date link was added
     useDate:  Date,     // date link was last used
     password: String,   // optional password for link
+    options:  Array,
     clicks:   Number    // Number of time used
 })
 
