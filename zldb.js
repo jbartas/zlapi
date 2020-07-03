@@ -60,15 +60,15 @@ const zlLinks = new Schema({
  */
 
 const zlGroup = new Schema({
-    adminIds:   Array,     	// Array of admins, by user Id
-    groupName:  String,		// Unique name, system wide.
-    descr:      String,   	// Description of group
+    admins:     Array,        // Array of admins, by user Id
+    groupName:  String,       // Unique name, system wide.
+    descr:      String,	      // Description of group
     tags:       String,
-    password:   String,		// optional, to limit non-member access
-    type:       String,     // Public, private, hidden
-    links:      Array,      // Associated link Ids
-    members:   	Array,      // _id list of member users
-    memberRW:   String,     // "r" (read) or "rw" (read write)
+    password:   String,	      // optional, to limit non-member access
+    type:       String,       // Public, private, hidden
+    links:      Array,        // Associated link Ids
+    members:   	Array,        // _id list of member users
+    memberRW:   String,       // "r" (read) or "rw" (read write)
 })
 
 

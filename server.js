@@ -41,6 +41,7 @@ app.use(session(sess_data));
 const zlDb = require('./zldb.js');
 const zlUser = zlDb.getzlUser();
 const zlLinks = zlDb.getzlLinks();
+const zlGroup = zlDb.getzlGroup();
 
 
 // User session managment
@@ -99,7 +100,7 @@ router.route('/login').post( function (req, res) {
         (err, result)  => {
         console.log("Auth find(user) result: ", result );
 
-        if( result.length > 0 ) {
+        if( result.length == 1 ) {
             console.log("found user");
 
             console.log( "setting res.cookie( name )", user.userName );
@@ -119,18 +120,23 @@ router.route('/login').post( function (req, res) {
             }
 
             // Lastly, check the password 
-            console.log("user result[0]", result[0]);
-            if(bcrypt.compareSync( req.body.password, result[0].password )) {                
-                console.log( "User " + user.userName + " - password OK, email: " + result[0].email );
-                res.json( { "status":"success", "session": req.session, "userEmail": result[0].email } );
+            console.log("user result[0]:", result[0]);
+            if(bcrypt.compareSync( req.body.password, result[0].password )) {
+                console.log( "User " + user.userName + " - password OK." );
+                res.json( { "status":"success", "session": req.session,
+                    "userEmail": result[0].email, "userID":result[0]._id } );
             } else {
                 console.log("password mismatch");
                 res.json( { "status":"error", "message": "password mismatch" } );
             }
         }
-        else {
+        else if(result.length == 0) {
             console.log("user not found");
             res.json( { "status":"error", "message": "Unknown user" } );
+        }
+        else {
+            console.log(" DB error: Multiple user records !!!! ");
+            res.json( { "status":"error", "message": "Server problem, please notify support." } );
         }
     });
 
@@ -287,6 +293,82 @@ router.route('/bumpClick').post( function (req, res) {
     
 });
 
+
+
+/* Record creation of a new group */
+
+router.route('/newGroup').post( function (req, res) {
+
+    console.log("/newGroup POST request; body: ", req.body );
+
+    /* If passed object has an _id, it's an update to an existing link */
+    if( req.body._id ) {
+        let filter = { _id: req.body._id };
+        let update = req.body;
+        console.log("/newGroup; update: ", update );
+
+        let newClickCount = zlLinks.findOneAndUpdate(
+            filter,
+            update,
+            { new: true }, (err) => {
+                if( err ) {
+                    console.log("/newLink: link update error: ", err );
+                    res.json( { "status":"error", "message": err } );
+                }
+                else {
+                    // no error
+                    res.json( { "status":"success", "message": "Updated link" } );
+                }
+                console.log("/newLink update; done - err: ", err );
+        });
+        return;
+    }
+    
+    let newGroup = req.body;
+    let now = new Date;
+
+    /* Add dates to the link object */
+    newGroup.addDate = now;
+
+    let groupdb = new zlGroup( newGroup );    // Create a DB item for the object
+
+    groupdb.save( (err) => {
+        if (err) {
+            res.json( { "status":"error", "message": err } );
+            //throw err;
+        }
+        console.log("/newGroup: created" );
+        res.json( { "status":"success", "message": "Added new link" } );
+    });
+});
+
+
+/* Get the links for a passed user */
+router.route('/getGroups/:id').get( function (req, res) {
+    console.log("/getGroups, params: ", req.params );
+    let query = { "members" : req.params.id };
+
+    zlGroup.find( query, (err, result) => {
+        if(err) {
+            console.log( "API: getGroups err", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            if( result.length > 0 ) {
+                console.log("found " + result.length + " records");
+                // console.log( result );
+                res.json( { "status":"success", "groupList": result } );
+            }
+            else {
+                console.log("No group records with id in members; id:" + req.params.id );
+                // return zero length list
+                res.json( { "status":"success", "groupList": result } );
+            }
+        }
+    });
+});
+
+/* Get a group by name (for checking name uniqueness) */
 
 
 ///------------ The actual server -------------//
