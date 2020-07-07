@@ -15,6 +15,7 @@ var credentials = require("./credentials.js");
 const bcrypt = require('bcrypt');
 var path = require('path');
 var cors = require('cors');  // The CORS developers should be shot dead.
+const   ObjectID = require('mongodb').ObjectID;
 
 
 // parse the POST variables into the request body
@@ -343,7 +344,7 @@ router.route('/newGroup').post( function (req, res) {
 });
 
 
-/* Get the links for a passed user */
+/* Get the groups for a passed user */
 router.route('/getGroups/:id').get( function (req, res) {
     console.log("/getGroups, params: ", req.params );
     let query = { "members" : req.params.id };
@@ -368,7 +369,104 @@ router.route('/getGroups/:id').get( function (req, res) {
     });
 });
 
+
 /* Get a group by name (for checking name uniqueness) */
+
+router.route('/getGroupInfo/:groupName').get( function (req, res) {
+    console.log("/getGroups, params: ", req.params );
+    let query = { "groupName" : req.params.groupName };
+
+    zlGroup.find( query, (err, result) => {
+        if(err) {
+            console.log( "API: getGroupInfo err ", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            if( result && (result.length > 0) ) {
+                console.log("found " + result.length + " records");
+                console.log( result );
+                res.json( { "status":"success", "groupList": result } );
+            }
+            else {
+                console.log("No group records of name " + req.params.groupName );
+                // return zero length list
+                res.json( { "status":"success", "groupList": [] } );
+            }
+        }
+    });
+});
+
+
+/* get list of links in a group */
+
+router.route('/getGroupLinks/:groupId').get( function (req, res) {
+    console.log("/getGroupsLinks, params: ", req.params );
+    
+    /* First we need to get the list of link _ids in the group */
+    let query = { "_id" : req.params.groupId };
+    zlGroup.find( query, (err, result) => {
+        if(err) {
+            console.log( "API: getGroupLinks; bad group _id ? err ", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            console.log( "API: getGroupLinks; groups: ", result );
+            if( result.length > 0 ) {
+                console.log("found " + result.length + " records");	// better be 1...
+                let links = result[0].links;
+                console.log( "links: ", links );	// tmp debug
+
+                /* Now get the records for the links in the group. first
+                 * turn object IDs array (of text) into array of mongoose 
+                 * Id objects. 
+                 */
+                let obj_ids = links.map( function(id) { return ObjectID(id); });
+                let query = {_id: {$in: obj_ids}};
+                console.log( "query: ", query );        // tmp debug
+                //let query = {_id: { $in: result.links }}
+
+                // find links which match the listed objects
+                zlLinks.find( query, (err, result) => {
+                    console.log("getGroupLinks; zlLinks.find result: ", result, 
+                            ", err: ", err);
+                    if( err ) {
+                        res.json( { "status":"error", "message": err } );
+                    }
+                    else {	// no error
+                        res.json( { "status":"success", "recordList": result } );
+                    }
+                });
+            }
+            else {
+                console.log("No links in group; group Id:", groupId );
+                // return zero length list
+                res.json( { "status":"success", "recordList": [] } );
+            }
+        }
+    });
+});
+
+
+/* Update a group record  */
+
+router.route('/updateGroup').post( function (req, res) {
+    console.log(" /updateGroup api POST request, body: ", req.body );
+
+    let filter = { _id: req.body._id };
+    let update = req.body;
+
+    zlGroup.findOneAndUpdate( filter, update, { new: true }, (err) => {
+        if( err ) {
+            console.log("/updateGroup: error: ", err );
+            res.json( { "status": "error", "message": err } );
+        }
+        else {
+            // no error
+            res.json( { "status":"success", "message": "Updated group" } );
+       }
+       console.log("/updateGroup; done - err: ", err );
+    });
+});
 
 
 ///------------ The actual server -------------//
