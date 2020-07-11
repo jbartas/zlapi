@@ -226,7 +226,7 @@ router.route('/newUser').post( function (req, res) {
 });
 
 
-/* Get the information for a passed user */
+/* Get the information for a passed user name */
 router.route('/getUserInfo/:userName').get( function (req, res) {
     console.log("/getUserInfo, params: ", req.params );
 
@@ -242,6 +242,26 @@ router.route('/getUserInfo/:userName').get( function (req, res) {
                 console.log( result );
                 res.json( { "status":"success", "userInfo": result } );
             }
+        }
+    });
+});
+
+
+/*  Get the information for one or more users passed by _id list */
+
+router.route('/getUserList').post( function (req, res) {
+    console.log("/getUserList, params: ", req.body );
+
+    let idList = req.body;
+    let obj_ids = idList.map( function(id) { return ObjectID(id); });
+    let query = {_id: {$in: obj_ids}};
+    zlUser.find( query, (err, result)  => {
+        console.log("getUserList: result: ", result, ", err: ", err );
+        if( err ) {
+            res.json( { "status":"error", "message": err } );        
+        }
+        else {
+            res.json( { "status":"success", "userList": result } );
         }
     });
 });
@@ -466,6 +486,135 @@ router.route('/updateGroup').post( function (req, res) {
        }
        console.log("/updateGroup; done - err: ", err );
     });
+});
+
+/* Update the user/admins in a group. 
+ * Passed parameter is an object with command info.
+ */
+
+router.route('/setGroupUsers').post(  function (req, res) {
+
+    console.log(" /setGroupUsers api POST request, body: ", req.body );
+    /* Steps for this are:
+     * - Get an ID for the user name
+     * - read in the group
+     * - add the user ID to group members or admins
+     * - update the group
+     */
+    let user = {"userName": req.body.userName };
+    zlUser.find( user, 
+        (err, result)  => {
+            console.log("Auth find(user) result: ", result, ", err: ", err );
+            if( err ) {
+                console.log("user not found");
+                res.json( { "status":"error", "message": "Unknown user" } );
+            }
+            else {
+                if( result.length == 1 ) {
+                    console.log("found user");
+                    let userId = result[0]._id.toString();   // Save ID for later
+
+                    /* Step 2 - read in the group */
+                    let query = { "groupName": req.body.groupName };
+                    zlGroup.find( query, (err, result) => {
+                        if(err) {
+                            console.log( "API: getGroups err", err );
+                            res.json( { "status":"error", "message": err } );
+                        }
+                        else {
+                            if( result.length == 1 ) {
+                                // found our group, Step 3:
+                                group = result[0];
+                                console.log("Found group: ", group );
+                                let adminIndex = group.admins.indexOf( userId );
+                                let memberIndex = group.members.indexOf( userId );
+                                let errmsg = null;	// use this as soft error flag
+
+                                if( req.body.operation == "delete" ) {
+                                    if( req.body.usertype == "admin" ) {
+                                        if (adminIndex == -1) {
+                                            console.log("Admin not found in group");
+                                        }
+                                        else {
+                                            if( group.admins.length == 1 ) {
+                                                errmsg = "Skipping delete of only admin";
+                                                console.log( errmsg );
+                                            }
+                                            else {
+                                                group.admins.splice(adminIndex, 1);
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        // usertype != admin
+                                        if (memberIndex == -1) {
+                                            errmsg = "Member not found in group";
+                                            console.log( errmsg );
+                                        }
+                                        else {
+                                            group.members.splice(memberIndex, 1);
+                                        }
+                                    }
+                                }
+                                else {
+                                    // operation != delete, do add
+                                    if( req.body.usertype == "admin" ) {
+                                        if( adminIndex != -1 ) {
+                                            errmsg = "Admin already in group";
+                                            console.log( errmsg );
+                                        }
+                                        else {
+                                            group.admins.push( userId );
+                                        }
+                                    }
+                                    else {
+                                        // operation != delete and usertype != admin
+                                        if( memberIndex != -1) {
+                                            errmsg = "member already in group";
+                                            console.log( errmsg );
+                                        }
+                                        else {
+                                            group.members.push( userId );
+                                        }
+                                    }
+                                }
+                                
+                                // report back any soft (logic) error and quit
+                                if( errmsg ) {
+                                    res.json( { "status":"error", "message": errmsg } );
+                                    return;
+                                }
+                                
+                                // group is ready to update.
+                                console.log("updating group: ", group );
+                                
+                                zlGroup.findByIdAndUpdate(
+                                    group._id,
+                                    group,
+                                    { new: true }, (err) => {
+                                        console.log("/setGroupUsers; updated - err: ", err );
+                                        if( err ) {
+                                            res.json( { "status":"error", "message": err } );
+                                        }
+                                        else {
+                                            res.json( { "status":"success", "updatedGroup": group } );
+                                        }
+                                });
+                                
+                            }
+                            else {
+                                console.log("DB serror, found != 1 groups: ", result );
+                                res.json( { "status":"error", "message": "Groups DB != 1 error" } );
+                            }
+                        }
+                    });
+                }
+                else {
+                    console.log("user not found or found multiple times");
+                    res.json( { "status":"error", "message": "Users != 1 error" } );
+                }
+            }    
+        });
 });
 
 
