@@ -156,14 +156,15 @@ router.route('/newLink').post( function (req, res) {
         let newClickCount = zlLinks.findOneAndUpdate(
             filter,
             update,
-            { new: true }, (err) => {
+            { new: true }, (err, result) => {
                 if( err ) {
                     console.log("/newLink: link update error: ", err );
                     res.json( { "status":"error", "message": err } );
                 }
                 else {
                     // no error
-                    res.json( { "status":"success", "message": "Updated link" } );
+                    res.json( { "status":"success", "message": "Updated link",
+                            "newLink": result } );
                 }
                 console.log("/newLink update; done - err: ", err );
         });
@@ -179,13 +180,14 @@ router.route('/newLink').post( function (req, res) {
 
     let linkdb = new zlLinks( newLink );    // Create a DB item for the object
 
-    linkdb.save( (err) => {
+    linkdb.save( (err, result) => {
         if (err) {
             res.json( { "status":"error", "message": err } );
             //throw err;
         }
         console.log("/newLink: created" );
-        res.json( { "status":"success", "message": "Added new link" } );
+        res.json( { "status":"success", "message": "Added new link",
+                    "newLink": result  } );
     });
 });
 
