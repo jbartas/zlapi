@@ -33,7 +33,7 @@ var cookieParser = require("cookie-parser");
 app.use( cookieParser(credentials.cookieSecret));
 
 // Use express-session package for session mgt.
-let sess_data = { resave: true , 
+let sess_data = { resave: true ,
         secret: 'Meatcake', saveUninitialized: true};
 app.use(session(sess_data));
 
@@ -48,8 +48,8 @@ const zlGroup = zlDb.getzlGroup();
 // User session managment
 let sessions = require('./zlsessions.js');
 
-/**** The actual zoomlinks server logic ***/ 
-    
+/**** The actual zoomlinks server logic ***/
+
 
 // GET request to the homepage
 app.get('/', (req, res) => {
@@ -61,7 +61,7 @@ app.get('/', (req, res) => {
     res.sendFile('index.html', {
         root: '.'
     });
-   
+
     //let hide_msg = "visible";
     //res.render('home', { "login_msg" : login_msg, "hide": hide_msg } );
 });
@@ -104,32 +104,40 @@ router.route('/login').post( function (req, res) {
         if( result.length == 1 ) {
             console.log("found user");
 
-            console.log( "setting res.cookie( name )", user.userName );
-            res.cookie( "name", user.userName );
-            
-            if( !req.session ) {
-                console.log( "Null req.session" );
-            }
-            else {
-                req.session.name = user.userName;
-                req.session.hash = 
-                    bcrypt.hashSync( user.userName, 10 );
-            }
-            sessions.set_session( req.session );
-            if( req.cookie ) {
-                console.log("Cookie ", req.cookie.name );
-            }
-
-            // Lastly, check the password 
+            // Check the password 
             console.log("user result[0]:", result[0]);
             if(bcrypt.compareSync( req.body.password, result[0].password )) {
                 console.log( "User " + user.userName + " - password OK." );
-                res.json( { "status":"success", "session": req.session,
-                    "userEmail": result[0].email, "userID":result[0]._id } );
             } else {
                 console.log("password mismatch");
                 res.json( { "status":"error", "message": "password mismatch" } );
+		return;
             }
+            let hash = bcrypt.hashSync( user.userName, 10 );
+            let session = { "name": user.userName, "hash": hash }
+/*
+            res.cookie( "name", user.userName );
+            res.cookie( "hash", hash );
+            console.log( "res.cookie: ", res );
+*/
+
+            if( !req.session ) {
+                console.log( "Null req.session" );
+                res.json( { "status":"error", "message": "Session error on server" } );
+            }
+            else {
+                req.session.cookie.name = user.userName;
+            }
+
+            sessions.set_session( session );
+/*
+            if( req.cookie ) {
+                console.log("req.cookie ", req.cookie );
+            }
+*/
+
+            res.json( { "status":"success", "session": req.session,
+                "userEmail": result[0].email, "userID":result[0]._id, "sessionHash":hash } );
         }
         else if(result.length == 0) {
             console.log("user not found");
@@ -240,10 +248,9 @@ router.route('/getUserInfo/:userName').get( function (req, res) {
             res.json( { "status":"error", "message": err } );
         }
         else {
-            if( result.length > 0 ) {
-                console.log( result );
-                res.json( { "status":"success", "userInfo": result } );
-            }
+            /* Got a result - it may be a zero-length array */
+            console.log( result );
+            res.json( { "status":"success", "userInfo": result } );
         }
     });
 });
@@ -260,7 +267,7 @@ router.route('/getUserList').post( function (req, res) {
     zlUser.find( query, (err, result)  => {
         console.log("getUserList: result: ", result, ", err: ", err );
         if( err ) {
-            res.json( { "status":"error", "message": err } );        
+            res.json( { "status":"error", "message": err } );
         }
         else {
             res.json( { "status":"success", "userList": result } );
@@ -270,9 +277,19 @@ router.route('/getUserList').post( function (req, res) {
 
 
 /* Get the links for a passed user */
-router.route('/getLinks/:name').get( function (req, res) {
-    console.log("/getLinks, params: ", req.params );
-    let query = { "userName" : req.params.name };
+router.route('/getLinks').post( function (req, res) {
+    console.log("/getLinks, body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/getlinks; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+
+    let query = { "userName" : req.body.name };
 
     zlLinks.find( query, (err, result) => {
         if(err) {
@@ -286,11 +303,11 @@ router.route('/getLinks/:name').get( function (req, res) {
                 res.json( { "status":"success", "recordList": result } );
             }
             else {
-                console.log("No link records for user " + req.params.name );
+                console.log("No link records for user " + req.body.name );
                 // return zero length list
                 res.json( { "status":"success", "recordList": result } );
             }
-        }    
+        }
     });
 });
 
@@ -392,7 +409,7 @@ router.route('/getGroups/:id').get( function (req, res) {
 });
 
 
-/* Get a group by name (for checking name uniqueness) */
+/* Get a group by name (for checking name uniqueness, getting ID, etc.) */
 
 router.route('/getGroupInfo/:groupName').get( function (req, res) {
     console.log("/getGroups, params: ", req.params );
@@ -422,7 +439,7 @@ router.route('/getGroupInfo/:groupName').get( function (req, res) {
 /* get list of links in a group */
 
 router.route('/getGroupLinks/:groupId').get( function (req, res) {
-    console.log("/getGroupsLinks, params: ", req.params );
+    console.log("/getGroupLinks, params: ", req.params );
     
     /* First we need to get the list of link _ids in the group */
     let query = { "_id" : req.params.groupId };
@@ -477,14 +494,14 @@ router.route('/updateGroup').post( function (req, res) {
     let filter = { _id: req.body._id };
     let update = req.body;
 
-    zlGroup.findOneAndUpdate( filter, update, { new: true }, (err) => {
+    zlGroup.findOneAndUpdate( filter, update, { new: true }, (err, doc) => {
         if( err ) {
             console.log("/updateGroup: error: ", err );
             res.json( { "status": "error", "message": err } );
         }
         else {
             // no error
-            res.json( { "status":"success", "message": "Updated group" } );
+            res.json( { "status":"success", "result": doc } );
        }
        console.log("/updateGroup; done - err: ", err );
     });

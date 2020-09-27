@@ -1,0 +1,34 @@
+
+# Makes the top line available for editing
+set morespace
+set multibuffer
+
+# search forward
+bind ^F whereis all
+# repeat last search
+bind F3 findnext all
+# cut
+bind ^X cut all
+unbind ^K all
+unbind F9 all
+# copy
+bind ^C copytext all
+# paste
+bind ^V uncut all
+unbind ^U all
+unbind F10 all
+# undo
+bind ^Z undo all
+# redo
+bind ^Y redo all
+# select all, ^A
+# help
+bind F1 help all
+unbind ^G main
+
+
+# close
+unbind ^W all
+# close all/quit
+bind ^Q exit all
+

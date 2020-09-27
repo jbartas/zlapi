@@ -1,15 +1,18 @@
 
 /* btsessions.js
  *
- * Session handler. If a user is logged in, each session gets 
- * passed a cookie with a username and session code. We just 
- * verify the name and hash is in  a list.
+ * Session handler. If a user is logged in, each request gets 
+ * passed a session cookie with a username and session code. We 
+ * just verify the name and hash is in  a list.
  */
 
 var sessionList = [];
 
+
 /* Add a session to the list of active sessions */
+
 module.exports.set_session = function ( session ) {
+    session.startTime = Date();
     sessionList.push( session );
     console.log("session added; ", sessionList );
 }
@@ -20,15 +23,11 @@ module.exports.set_session = function ( session ) {
  * If not found (error) returns null;
  */
 module.exports.check_session = function ( session ) {
-    if( !session ) {
-        // this should not happen
-        console.log("check_session: null passed");
-        return null;
-    }
-    // find the session in the actice session ist
+
+    // find the session in the active session list
     for( var i = 0; i < sessionList.length; i++ ) {
         if( sessionList[i].hash == session.hash ) {
-            return "Logged in: " + session.name ;
+            return session;
         }
     }
     console.log("check_session: session not found in list");
