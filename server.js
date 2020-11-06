@@ -43,6 +43,7 @@ const zlDb = require('./zldb.js');
 const zlUser = zlDb.getzlUser();
 const zlLinks = zlDb.getzlLinks();
 const zlGroup = zlDb.getzlGroup();
+const zlLinkList = zlDb.getzlLinkList();
 
 
 // User session managment
@@ -636,6 +637,41 @@ router.route('/setGroupUsers').post(  function (req, res) {
         });
 });
 
+/* Create a new list */
+
+router.route('/makeLinksList').post( function (req, res) {
+
+    console.log("/makeLinksList POST request; body: ", req.body );
+
+    /* If passed object has an _id, it's an update to an existing link */
+    if( req.body._id ) {
+        let filter = { _id: req.body._id };
+        let update = req.body;
+        console.log("/makeLinkList; update: ", update );
+        // More here later
+    }
+    else {
+
+        let newList = req.body;
+        let now = new Date;
+
+        /* Set Create time/date for the list */
+        newList.CreateTime = now;
+
+        let listdb = new zlLinkList( newList );    // Create a DB item
+        listdb.save( (err) => {
+        if (err) {
+                res.json( { "status":"error", "message": err } );
+                //throw err;
+            }
+            else {
+                console.log("/makeLinkList: created" );
+                res.json( { "status":"success", "message": "Created new List" } );
+            }
+        });
+    }
+
+});
 
 ///------------ The actual server -------------//
 console.log("Server.js: Starting Server listen...");

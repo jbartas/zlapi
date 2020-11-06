@@ -71,6 +71,18 @@ const zlGroup = new Schema({
     memberRW:   String,       // "r" (read) or "rw" (read write)
 })
 
+/* Linkshare Lists of links
+ *
+ */
+
+const zlLinkList = new Schema({
+    linkIds:     Array,        // Array of admins, by user Id
+    owner:       Object,       // Id of list owning user
+    name:        String,       // Name of list, editable by owner
+    addDate:     Date,         // Date/time created
+    ttl:         Number        // time to live
+
+})
 
 module.exports = {
     getzlUser: () => {
@@ -78,11 +90,14 @@ module.exports = {
     },
 
     getzlLinks: () => {
-		return connection.model("zlLinks", zlLinks);
+        return connection.model("zlLinks", zlLinks);
     },
 
     getzlGroup: () => {
-                return connection.model("zlGroup", zlGroup);
+        return connection.model("zlGroup", zlGroup);
     },
-    
+
+    getzlLinkList: () => {
+        return connection.model("zlLinkList", zlLinkList);
+    },
 }
