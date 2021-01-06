@@ -441,7 +441,7 @@ router.route('/getGroupInfo/:groupName').get( function (req, res) {
 
 router.route('/getGroupLinks/:groupId').get( function (req, res) {
     console.log("/getGroupLinks, params: ", req.params );
-    
+
     /* First we need to get the list of link _ids in the group */
     let query = { "_id" : req.params.groupId };
     zlGroup.find( query, (err, result) => {
@@ -598,16 +598,16 @@ router.route('/setGroupUsers').post(  function (req, res) {
                                         }
                                     }
                                 }
-                                
+
                                 // report back any soft (logic) error and quit
                                 if( errmsg ) {
                                     res.json( { "status":"error", "message": errmsg } );
                                     return;
                                 }
-                                
+
                                 // group is ready to update.
                                 console.log("updating group: ", group );
-                                
+
                                 zlGroup.findByIdAndUpdate(
                                     group._id,
                                     group,
@@ -620,7 +620,7 @@ router.route('/setGroupUsers').post(  function (req, res) {
                                             res.json( { "status":"success", "updatedGroup": group } );
                                         }
                                 });
-                                
+
                             }
                             else {
                                 console.log("DB serror, found != 1 groups: ", result );
@@ -633,7 +633,7 @@ router.route('/setGroupUsers').post(  function (req, res) {
                     console.log("user not found or found multiple times");
                     res.json( { "status":"error", "message": "Users != 1 error" } );
                 }
-            }    
+            }
         });
 });
 
@@ -642,6 +642,15 @@ router.route('/setGroupUsers').post(  function (req, res) {
 router.route('/makeLinksList').post( function (req, res) {
 
     console.log("/makeLinksList POST request; body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/makelinksList; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
 
     /* If passed object has an _id, it's an update to an existing link */
     if( req.body._id ) {
@@ -656,11 +665,11 @@ router.route('/makeLinksList').post( function (req, res) {
         let now = new Date;
 
         /* Set Create time/date for the list */
-        newList.CreateTime = now;
+        newList.createDate = now;
 
         let listdb = new zlLinkList( newList );    // Create a DB item
         listdb.save( (err) => {
-        if (err) {
+            if (err) {
                 res.json( { "status":"error", "message": err } );
                 //throw err;
             }
@@ -672,6 +681,98 @@ router.route('/makeLinksList').post( function (req, res) {
     }
 
 });
+
+
+/* Get lists owned by passed user  */
+
+router.route('/getLists').post( function (req, res) {
+    console.log("/getLists POST request; body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/getlinks; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        console.log("error, returning ", msg );
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+
+    /* Get the list of lists for passed userId */
+    let query = { "owner" : req.body.owner };
+    console.log( "getLists, query; ", query );
+
+    zlLinkList.find( query, (err, result) => {
+        if(err) {
+            console.log( "API: getLists; bad userId _id ? err ", err );
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            console.log( "API: getLists: lists ", result );
+            res.json( { "status":"success", "recordList": result } );
+        }
+    });
+
+});
+
+
+/* get full record for a list of links */
+
+router.route('/getList').post( function (req, res) {
+    console.log("/getList, body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/getList; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+
+    let query = { "_id" : req.body.listId };
+    zlLinkList.find( query, (err, result) => {
+        if (err) {
+            res.json( { "status":"error", "message": err } );
+            //throw err;
+        }
+        else {
+            console.log("/getList: returning list named ", result.name );
+            res.json( { "status":"success", "listData": result } );
+        }
+    });
+});
+
+
+/* Get bulk links data for a passed list of link Ids */
+
+router.route('/getBulkLinks').post( function (req, res) {
+    console.log("/getBulkLinks, body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/getBulkLinks; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+
+    /* Search all links for the passed Ids */
+    let query = {_id: {$in: req.body.linkIds}};
+    zlLinks.find( query, (err, result)  => {
+        console.log("getUserList: result: ", result, ", err: ", err );
+        if( err ) {
+            res.json( { "status":"error", "message": err } );
+        }
+        else {
+            res.json( { "status":"success", "listLinks": result } );
+        }
+    });
+
+});
+
+
 
 ///------------ The actual server -------------//
 console.log("Server.js: Starting Server listen...");

@@ -79,9 +79,8 @@ const zlLinkList = new Schema({
     linkIds:     Array,        // Array of admins, by user Id
     owner:       Object,       // Id of list owning user
     name:        String,       // Name of list, editable by owner
-    addDate:     Date,         // Date/time created
+    createDate:  Date,         // Date/time created
     ttl:         Number        // time to live
-
 })
 
 module.exports = {
