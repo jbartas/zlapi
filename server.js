@@ -647,7 +647,7 @@ router.route('/makeLinksList').post( function (req, res) {
     let session = sessions.check_session( req.body );
     console.log("/makelinksList; session is ", session );
     if( session == null ) {
-        let msg = "Must be logged in to access links";
+        let msg = "Must be logged in to access lists";
         res.json( { "status":"error", "message": msg } );
         return;
     }
@@ -658,6 +658,22 @@ router.route('/makeLinksList').post( function (req, res) {
         let update = req.body;
         console.log("/makeLinkList; update: ", update );
         // More here later
+        let newClickCountList = zlLinkList.findOneAndUpdate(
+            filter,
+            update,
+            { new: true }, (err, result) => {
+                if( err ) {
+                    console.log("/makeLinkList: link update error: ", err );
+                    res.json( { "status":"error", "message": err } );
+                }
+                else {
+                    // no error
+                    res.json( { "status":"success", "message": "Updated list",
+                            "newList": result } );
+                }
+                console.log("/newList update; done - err: ", err );
+        });
+
     }
     else {
 
