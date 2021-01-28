@@ -44,6 +44,7 @@ const zlUser = zlDb.getzlUser();
 const zlLinks = zlDb.getzlLinks();
 const zlGroup = zlDb.getzlGroup();
 const zlLinkList = zlDb.getzlLinkList();
+const zlLogin = zlDb.getzlLogin();
 
 
 // User session managment
@@ -116,11 +117,6 @@ router.route('/login').post( function (req, res) {
             }
             let hash = bcrypt.hashSync( user.userName, 10 );
             let session = { "name": user.userName, "hash": hash }
-/*
-            res.cookie( "name", user.userName );
-            res.cookie( "hash", hash );
-            console.log( "res.cookie: ", res );
-*/
 
             if( !req.session ) {
                 console.log( "Null req.session" );
@@ -131,11 +127,22 @@ router.route('/login').post( function (req, res) {
             }
 
             sessions.set_session( session );
-/*
-            if( req.cookie ) {
-                console.log("req.cookie ", req.cookie );
-            }
-*/
+
+            // record the login in DB
+            let newlogin = {
+                "userId"     : result[0]._id,
+                "name"       : user.userName,
+                "loginDate"  : new Date,
+                "logoutDate" : null,         // Date/time logged out or null.
+                "ipAddress"  : req.connection.remoteAddress
+            };
+            let logindb = new zlLogin( newlogin );    // Create a DB item for the object
+            logindb.save( (err, loginResult) => {
+                if (err) {
+                    res.json( { "status":"error", "message": err } );
+                 }
+               console.log("/newLink: created" );
+            });
 
             res.json( { "status":"success", "session": req.session,
                 "userEmail": result[0].email, "userID":result[0]._id, "sessionHash":hash } );

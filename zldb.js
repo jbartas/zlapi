@@ -27,6 +27,20 @@ const zlUser = new Schema({
 });
 
 
+/* Logins
+ *
+ * All logins to the system for now. See how big this gets.
+ */
+
+const zlLogin = new Schema({
+    userId:      Object,       // Id of logged in user
+    name:        String,       // Name of logged in person
+    loginDate:   Date,         // Date/time logged in.
+    logoutDate:  Date,         // Date/time logged out or null.
+    ipAddress:   String        // IP request came from
+});
+
+
 /* This defines the basic single link record.
  */
 const zlLinks = new Schema({
@@ -98,5 +112,9 @@ module.exports = {
 
     getzlLinkList: () => {
         return connection.model("zlLinkList", zlLinkList);
+    },
+
+    getzlLogin: () => {
+        return connection.model("zlLogin", zlLogin);
     },
 }
