@@ -795,6 +795,35 @@ router.route('/getBulkLinks').post( function (req, res) {
 
 });
 
+/* Delete a list of links. Id of list is parameters
+ */
+
+router.route('/deleteList').post( function (req, res) {
+    console.log("/deleteList, body: ", req.body );
+
+    /* make sure login hash is valid */
+    let session = sessions.check_session( req.body );
+    console.log("/getBulkLinks; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+
+    let query = { "_id" : req.body.listId };
+
+    zlLinkList.deleteOne( query, (err) => {
+        if (err) {
+            res.json( { "status":"error", "message": err } );
+            //throw err;
+        }
+        else {
+            console.log("/deleteList: deleted ", req.body.listId );
+            res.json( { "status":"success", "deleted list": req.body.listId } );
+        }
+    });
+
+});
 
 
 ///------------ The actual server -------------//

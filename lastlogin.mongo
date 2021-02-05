@@ -1,0 +1,5 @@
+// Displays login records in the mongo DB
+// usage: mongo < lastlogin.mongo
+use linkshare
+db.zllogins.find( {"loginDate" : { $gt : ISODate("2021-01-28T00:00:00Z")} } );
+
