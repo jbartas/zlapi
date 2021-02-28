@@ -446,11 +446,26 @@ router.route('/getGroupInfo/:groupName').get( function (req, res) {
 
 /* get list of links in a group */
 
-router.route('/getGroupLinks/:groupId').get( function (req, res) {
-    console.log("/getGroupLinks, params: ", req.params );
+router.route('/getGroupLinks/').post( function (req, res) {
+    console.log("/getGroupLinks, body: ", req.body );
+
+    /* make sure login hash is valid */
+
+/* This may be accessed via 'magic link' where user is not logged in.
+
+    let session = sessions.check_session( req.body );
+    console.log("/getGroupLinks; session is ", session );
+    if( session == null ) {
+        let msg = "Must be logged in to access group links";
+        res.json( { "status":"error", "message": msg } );
+        return;
+    }
+*/
+
+    let groupId = req.body.group;
 
     /* First we need to get the list of link _ids in the group */
-    let query = { "_id" : req.params.groupId };
+    let query = { "_id" : groupId };
     zlGroup.find( query, (err, result) => {
         if(err) {
             console.log( "API: getGroupLinks; bad group _id ? err ", err );
